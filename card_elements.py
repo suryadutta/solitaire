@@ -30,7 +30,9 @@ class Pile:
     
     def __str__(self):        
         returnedCards = [str(card) for card in reversed(self.getFlippedCards())]
-        returnedCards.insert(0,"{0} cards flipped down".format(len(self.cards) - len(self.getFlippedCards())))
+        flippedDownCount = len(self.cards) - len(self.getFlippedCards())
+        if flippedDownCount>0:
+            returnedCards.insert(0,"{0} cards flipped down".format(flippedDownCount))
         return ", ".join(returnedCards)
 
 class Deck: 
