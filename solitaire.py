@@ -173,3 +173,80 @@ class Game:
                 if verbose:
                     print("No more moves left!")
                 return
+
+#Olivia's Additions ###############################################
+
+    #Get all possible moves somehow
+    def getPossibleMoves(self):
+
+    #Create new game and return initial state vector (high level or low level)
+    def newGame(high_level):
+        game = Game()
+
+        if high_level:
+
+        else:
+
+    #Check if player is out of moves
+    def checkIfOutOfMoves(self):
+
+    #Check if card on pile needs to be turned- reward 5
+    def checkIfPileDrawn(self):
+        return True
+
+    #Move a card between two piles - no reward
+    def moveBetweenPiles(self):
+
+        if checkIfPileDrawn():
+            return 5
+        else:
+            return 0
+
+    #Move a card from the deck to the pile - reward 5
+    def moveDeckToPile(self):
+        return 5
+
+    #Move a card from the deck to block - reward 10
+    def movePileToBlock(self):
+
+        if checkIfPileDrawn():
+            return 15
+        else:
+            return 10
+
+    #Move a card from block back to pile - reward -15
+    def moveBlockToPile(self):
+        return -15
+
+    #Recycle deck - return -100
+    def recycleDeck(self):
+        return -100
+
+    #Draw a card from the deck - no reward
+    def drawDeck(self):
+        return 0
+
+    def make_move(state,action):
+        if action == "moveBetweenPiles":
+            reward = moveBetweenPiles()
+
+        if action == "moveDeckToPile":
+            reward = moveDeckToPile()
+
+        if action == "movePileToBlock":
+            reward = movePileToBlock()
+
+        if action == "moveBlockToPile":
+            reward = moveBlockToPile()
+
+        if action == "recycleDeck":
+            reward = recycleDeck()
+
+        if action == "drawDeck":
+            reward = drawDeck()
+
+        next_state = getNextState(state)
+        return reward,next_state
+
+    #called after making a move- recalculate state based on move made
+    def getNewState(state):
