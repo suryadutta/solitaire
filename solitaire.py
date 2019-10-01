@@ -178,6 +178,11 @@ class Game:
 
     #Get all possible moves somehow
     def getPossibleMoves(self):
+        # start with finding all possible moves for each card on piles
+
+        # then, look for moves from block to piles
+
+        # then, look for move from trash to block or pile
 
     #Create new game and return initial state vector (high level or low level)
     def newGame(high_level):
@@ -250,3 +255,4 @@ class Game:
 
     #called after making a move- recalculate state based on move made
     def getNewState(state):
+        pass
