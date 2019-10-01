@@ -1,4 +1,5 @@
 from card_elements import Card, Deck, Pile
+from action import Action
 
 class Game:
     
@@ -59,6 +60,35 @@ class Game:
                 return True
             else:
                 return False
+
+    def canAddToBlock(self, card):
+        """Check whether we can add the card to the block, without actually doing it. If it can be moved, return target pile."""
+        if card is None:
+            return False
+        elif len(self.blockPiles[card.suit].cards)>0:
+            highest_value = self.blockPiles[card.suit].cards[0].value
+            if self.values[self.values.index(highest_value)+1] == card.value:
+                return self.blockPiles[card.suit]
+            else:
+                return False
+        else:
+            if card.value=="A":
+                return self.blockPiles[card.suit]
+            else:
+                return False
+
+    def canMoveBlockToPile(self, card):
+        moves = []
+        if card is None:
+            return False
+        for pile in self.playPiles:
+            if self.checkCardOrder(pile.cards[0], card):
+                moves.append(pile)
+        if len(moves) > 0:
+            return moves
+        else:
+            return False
+
         
     def takeTurn(self, verbose=False):
                 
@@ -178,9 +208,39 @@ class Game:
 
     #Get all possible moves somehow
     def getPossibleMoves(self):
-        # start with finding all possible moves for each card on piles
+        actions = []
+        # start with finding all possible moves from pile to pile
+        for pile1 in self.playPiles:
+            pile1_flipped_cards = pile1.getFlippedCards()
+            if len(pile1_flipped_cards) > 0:
+                for pile2 in self.playPiles:
+                    pile2_flipped_cards = pile2.getFlippedCards()
+                    if pile2 is not pile1 and len(pile2_flipped_cards) > 0:
+                        for transfer_cards_size in range(1, len(pile1_flipped_cards) + 1):
+                            cards_to_transfer = pile1_flipped_cards[:transfer_cards_size]
+                            if self.checkCardOrder(pile2.cards[0], cards_to_transfer[-1]):
+                                pile1_downcard_count = len(pile1.cards) - len(pile1_flipped_cards)
+                                pile2_downcard_count = len(pile2.cards) - len(pile2_flipped_cards)
+                                if pile2_downcard_count < pile1_downcard_count:
+                                    actions.append(Action(reversed(cards_to_transfer), pile1, pile2))
+                                elif pile1_downcard_count == 0 and len(cards_to_transfer) == len(pile1.cards):
+                                    actions.append(Action(reversed(cards_to_transfer), pile1, pile2))
 
-        # then, look for moves from block to piles
+        # then find all moves from pile to block
+        for pile in self.playPiles:
+            add = self.canAddToBlock(pile.cards[0])
+            if len(pile.cards) > 0 and add:
+                actions.append(Action([pile.cards[0]], pile, add))
+
+        # then, look for moves from block to piles (negative reward, but technically allowed.
+        for block in self.blockPiles:
+            add = self.canMoveBlockToPile(block.cards[0])
+            if len(block.cards) > 0 and add:
+                actions.extend([Action([block.cards[0]], block, add[i]) for i in add])
+
+        # then, look for opportunity to recycle trash
+        # TODO: I think we need to rework how we are dealing with the trash pile - it doesn't seem to have a concept of recycling right now
+        # that is needed for the current reward structure
 
         # then, look for move from trash to block or pile
 
@@ -256,3 +316,4 @@ class Game:
     #called after making a move- recalculate state based on move made
     def getNewState(state):
         pass
+
