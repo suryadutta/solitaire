@@ -23,7 +23,8 @@ class Game:
             thisPile.flipFirstCard()  
             self.playPiles.append(thisPile)
         self.blockPiles = {suit: Pile() for suit in self.suits}
-        self.deck.cards[0].flip()
+        self.trashPileUp = []
+        self.trashPileDown = [self.deck.takeFirstCard(flip = False) for i in range(0, len(self.deck))]
     
     def getGameElements(self):
         returnObject = {
@@ -184,23 +185,16 @@ class Game:
                     
         else:
             #End: draw from deck
-            if len(self.deck.cards)>0:
+            if len(self.trashPileDown)>0:
 
-                currentCard = self.deck.cards[0]
+                currentCard = self.trashPileDown.pop(0)
 
-                if currentCard in self.deck.cache:
-                    if verbose:
-                        print("No more moves left!")
-                    return 
-
-                else:
-                    self.deck.drawCard()
-                    #if verbose:
-                        #print("Drawing new card: {0}".format(str(currentCard)))
-                    self.deck.cache.append(currentCard)
-                    return self.simulate(draw=True, verbose=verbose)
+                self.trashPileUp.insert(0, currentCard.flip())
             else:
-                if verbose:
+                if len(self.trashPileUp)<1:
+                    #recycle trash
+                    self.trashPileDown.extend([self.trashPileUp.pop(0).flip() for i in range(0, len(self.trashPileUp))])
+                elif verbose:
                     print("No more moves left!")
                 return
 
@@ -238,11 +232,27 @@ class Game:
             if len(block.cards) > 0 and add:
                 actions.extend([Action([block.cards[0]], block, add[i]) for i in add])
 
+        # then look for opportunity to draw card
+        if len(self.trashPileDown) > 0:
+            actions.append(Action(self.trashPileDown[0], self.trashPileDown, self.trashPileUp))
         # then, look for opportunity to recycle trash
-        # TODO: I think we need to rework how we are dealing with the trash pile - it doesn't seem to have a concept of recycling right now
-        # that is needed for the current reward structure
+        if len(self.trashPileUp) < 1:
+            # recycle trash
+            # for now, we represent this action as (None, self.trashPileUp, self.trashPileDown)
+            actions.append(Action(None, self.trashPileUp, self.trashPileDown))
 
         # then, look for move from trash to block or pile
+
+        # trash to pile
+        for pile in self.playPiles:
+            add = self.checkCardOrder(pile.cards[0], self.trashPileUp[0])
+            if len(self.trashPileUp) > 0 and add:
+                actions.append(Action(self.trashPileUp[0], self.trashPileUp, pile))
+
+        # trash to block
+        add = self.canAddToBlock(self.trashPileUp[0])
+        if len(self.trashPileUp) > 0 and add:
+            actions.append(Action(self.trashPileUp[0], self.trashPileUp, add))
 
     #Create new game and return initial state vector (high level or low level)
     def newGame(high_level):
