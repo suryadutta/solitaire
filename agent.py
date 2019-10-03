@@ -67,18 +67,17 @@ class agent:
             while moves < max_moves:
 
                 #make a move, update state and total score
-                reward, next_state = state.make_move(state,action)
+                reward = state.make_move(action)
                 total_score += reward
                 moves += 1
 
                 #get next action using epsilon greedy and corresponding Q
-                next_action = epsilon_greedy(next_state,epsilon)
-                next_Q = features.get_Q(next_state,next_action)
+                next_action = epsilon_greedy(state,epsilon)
+                next_Q = features.get_Q(state,next_action)
 
                 #Update Q, feature weights, state, action
                 Q += alpha*[reward+(gamma*next_Q-Q)]
                 features.update_weights()
-                state = next_state
                 action = next_action
 
                 #If in terminal state (either won or out of moves) break out of while loop
