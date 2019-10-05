@@ -42,6 +42,8 @@ class LowLevelVector:
         pass
 
     #get Q using linear function approximation
+    #TODO return 0 if in terminating state (either winning or out of moves)
+    #TODO finish up checkIfOutOfMoves in solitaire.py and check in this method if blocks full / all else empty
     def get_Q(self,state,action):
 
         update_features(state,action)

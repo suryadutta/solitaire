@@ -10,14 +10,42 @@ class agent:
     #@return next action
     def epsilon_greedy(state,epsilon):
 
-        #find all valid moves that can be made- some kind of vector
+        #find all valid moves that can be made- returns list of action objects
         possible_moves = state.getPossibleMoves()
+        rewards = []
 
         #get rewards corresponding to all possible moves
-        #TODO - don't actually want to make the move, just get what the reward would be
-        rewards=[]
-        for action in possible_moves:
-            rewards.append(state.make_move(state,action))
+        for i in range(len(possible_moves)):
+
+            #TODO can cause card flip +5 reward
+            #if action is a move between piles, 0 reward
+            if possible_moves[i].id == 1:
+                rewards[i] = 0
+
+            # TODO can cause card flip +5 reward
+            #if action is a move from pile to block, 10 reward
+            elif possible_moves[i].id == 2:
+                rewards[i] = 10
+
+            #if action is a move from block to pile, -15 reward
+            elif possible_moves[i].id == 3:
+                rewards[i] = -15
+
+            #if action is draw card, 0 reward
+            elif possible_moves[i].id == 4:
+                rewards[i] = 0
+
+            #if action is recycle deck, -100 reward
+            elif possible_moves[i].id == 5:
+                rewards[i] = -100
+
+            #if action is move from waste to pile, 5 reward
+            elif possible_moves[i].id == 6:
+                rewards[i] = 5
+
+            #if action is move from waste to block, 10 reward
+            elif possible_moves[i].id == 7:
+                rewards[i] = 10
 
         #get random number between 1-10
         #if random number > epsilon*10 choose an action at random
@@ -27,6 +55,8 @@ class agent:
             return possible_moves[random_choice]
 
         #else choose move with hightest reward
+        #TODO decide how you want to handle if multiple actions have same max reward- pick one at random? Always choose first?
+        #TODO currently index(max) takes first occurence of the max value
         max_index = rewards.index(max(rewards))
         return possible_moves[max_index]
 
@@ -41,10 +71,6 @@ class agent:
 
         total_moves = []
         final_scores = []
-
-        #possible actions
-        actions=["moveBetweenPiles","moveDeckToPile","movePileToBlock","moveBlockToPile",
-                 "recycleDeck","drawDeck"]
 
         #Get initial Q, depending on whether high or low level features
         if high_level:
@@ -67,6 +93,8 @@ class agent:
             while moves < max_moves:
 
                 #make a move, update state and total score
+                # state automatically updates when making a move, no need to manually update value
+                #TODO make sure make move method returns reward
                 reward = state.make_move(action)
                 total_score += reward
                 moves += 1
@@ -80,8 +108,8 @@ class agent:
                 features.update_weights()
                 action = next_action
 
-                #If in terminal state (either won or out of moves) break out of while loop
-                if next_Q == 0:
+                #If in terminal state (either won, can't move, or exceed move limit) break out of while loop
+                if next_Q == 0 or moves >= 500:
                     if game.checkIfCompleted():
                         won = True
                     break
@@ -100,7 +128,7 @@ class agent:
     LEARNING_RATE = 0.1
     DISCOUNT_FACTOR = 0.9
     EPSILON = 0.9
-    NUM_TRAINING_GAMES = 10000
+    NUM_TRAINING_GAMES = 10
     MOVE_LIMIT = 500
     HIGH_LEVEL = True
 

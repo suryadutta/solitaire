@@ -36,9 +36,12 @@ class Game:
         return returnObject
 
     def checkCardOrder(self,higherCard,lowerCard):
+        notKing = True
+        if lowerCard.value == 'K':
+            notKing = False
         suitsDifferent = self.suits[higherCard.suit] != self.suits[lowerCard.suit]
         valueConsecutive = self.values[self.values.index(higherCard.value)-1] == lowerCard.value
-        return suitsDifferent and valueConsecutive
+        return suitsDifferent and valueConsecutive and notKing
 
     def checkIfCompleted(self):
         deckEmpty = len(self.deck.cards)==0
@@ -63,8 +66,6 @@ class Game:
             else:
                 return False
 
-
-    ######################Katy's additions###############################
     def canAddToBlock(self, card):
         """Check whether we can add the card to the block, without actually doing it. If it can be moved, return target pile."""
         if card is None:
@@ -93,12 +94,6 @@ class Game:
             return moves
         else:
             return False
-
-
-
-
-    ##################End Katy's additions###############################
-
 
     def takeTurn(self, verbose=False):
 
@@ -224,13 +219,12 @@ class Game:
                     print("No more moves left!")
                 return
 
-#Olivia's Additions ###############################################
 
-    # Get all possible moves somehow
+    # Get all possible moves that can be made and add to a list of actions
     def getPossibleMoves(self):
         actions = []
 
-        # start with finding all possible moves from pile to pile
+        #1. Find all possible moves between play piles
         for pile1 in self.playPiles:
             pile1_flipped_cards = pile1.getFlippedCards()
 
@@ -238,74 +232,83 @@ class Game:
             if len(pile1.cards) == 0:  # pile has no cards
                 for pile2 in self.playPiles:
                     if len(pile2.cards) > 1 and pile2.cards[0].value == "K":
-                        actions.append(Action(pile2.getFlippedCards(),pile2,pile1))
+                        actions.append(Action(pile2.getFlippedCards(),pile2,pile1,1))
 
-
+            #iterate through every other pile
             if len(pile1_flipped_cards) > 0:
                 for pile2 in self.playPiles:
                     pile2_flipped_cards = pile2.getFlippedCards()
+
+                    #if they're different piles and pile2 has any faceup cards
                     if pile2 is not pile1 and len(pile2_flipped_cards) > 0:
+                        #iterate through every possible upward facing stack in pile1
                         for transfer_cards_size in range(1, len(pile1_flipped_cards) + 1):
                             cards_to_transfer = pile1_flipped_cards[:transfer_cards_size]
+                            #if end of pile2 can be appended by top of a pile1 pile add it to actions
                             if self.checkCardOrder(pile2.cards[0], cards_to_transfer[-1]):
-                                pile1_downcard_count = len(pile1.cards) - len(pile1_flipped_cards)
-                                pile2_downcard_count = len(pile2.cards) - len(pile2_flipped_cards)
-                                if pile2_downcard_count < pile1_downcard_count:
-                                    actions.append(Action(reversed(cards_to_transfer), pile1, pile2))
-                                elif pile1_downcard_count == 0 and len(cards_to_transfer) == len(pile1.cards):
-                                    actions.append(Action(reversed(cards_to_transfer), pile1, pile2))
+                                actions.append(Action(reversed(cards_to_transfer),pile1,pile2),1)
 
-        # then find all moves from pile to block
+                                ###############Why??
+                                #pile1_downcard_count = len(pile1.cards) - len(pile1_flipped_cards)
+                                #pile2_downcard_count = len(pile2.cards) - len(pile2_flipped_cards)
+                                #if pile2_downcard_count < pile1_downcard_count:
+                                #    actions.append(Action(reversed(cards_to_transfer), pile1, pile2))
+                                #elif pile1_downcard_count == 0 and len(cards_to_transfer) == len(pile1.cards):
+                                #    actions.append(Action(reversed(cards_to_transfer), pile1, pile2))
+
+        #2. Find all moves from play piles to blocks
         for pile in self.playPiles:
             if len(pile.cards) > 0:
                 add = self.canAddToBlock(pile.cards[0])
                 if add:
-                    actions.append(Action([pile.cards[0]], pile, add))
+                    actions.append(Action([pile.cards[0]], pile, add,2))
 
-        # then, look for moves from block to piles (negative reward, but technically allowed)
+        #3. Find all moves from blocks to play piles (negative reward)
         for suit in self.suits:
             if len(self.blockPiles[suit].cards) > 0:
                 add = self.canMoveBlockToPile(self.blockPiles[suit].cards[0])
                 if add:
-                    actions.extend([Action(self.blockPiles[suit].cards[0], self.blockPiles[suit], i.cards) for i in add])
+                    actions.extend([Action(self.blockPiles[suit].cards[0], self.blockPiles[suit], i.cards,3) for i in add])
 
         #for block in self.blockPiles:
         #    add = self.canMoveBlockToPile(block.cards[0])
         #    if len(block.cards) > 0 and add:
         #        actions.extend([Action([block.cards[0]], block, add[i]) for i in add])
 
-        # then look for opportunity to draw card
+        #4. Check if can draw card from waste pile
         if len(self.trashPileDown) > 0:
-            actions.append(Action(self.trashPileDown[0], self.trashPileDown, self.trashPileUp))
-        # then, look for opportunity to recycle trash
+            actions.append(Action(self.trashPileDown[0], self.trashPileDown, self.trashPileUp,4))
+
+        #5. Check if can recycle waste pile
         if len(self.trashPileDown) < 1:
             # recycle trash
             # for now, we represent this action as (None, self.trashPileUp, self.trashPileDown)
-            actions.append(Action(None, self.trashPileUp, self.trashPileDown))
+            actions.append(Action(None, self.trashPileUp, self.trashPileDown,5))
 
-        # then, look for move from trash to block or pile
-
-        # trash to pile
+        #6. Find all moves from trash to play piles
         for pile in self.playPiles:
 
             if len(self.trashPileUp) > 0:
                 if len(pile.cards)==0 and self.trashPileUp[-1].value=='K':
-                    actions.append(Action(self.trashPileUp[-1],self.trashPileUp,pile))
+                    actions.append(Action(self.trashPileUp[-1],self.trashPileUp,pile,6))
 
                 if len(pile.cards) > 0:
                     add = self.checkCardOrder(pile.cards[0], self.trashPileUp[-1])
                     if add:
-                        actions.append(Action(self.trashPileUp[-1], self.trashPileUp, pile))
+                        actions.append(Action(self.trashPileUp[-1], self.trashPileUp, pile,6))
 
-        # trash to block
+        #7. Find all moves from trash to blocks
         if len(self.trashPileUp) > 0:
             add = self.canAddToBlock(self.trashPileUp[-1])
             if add:
-                actions.append(Action(self.trashPileUp[-1], self.trashPileUp, add))
+                actions.append(Action(self.trashPileUp[-1], self.trashPileUp, add,7))
 
         return actions
 
+#################################################################################
+
     #Check if player is out of moves
+    #TODO- check if actions[] is empty
     def checkIfOutOfMoves(self):
         pass
 
@@ -346,22 +349,5 @@ class Game:
         return 0
 
     def make_move(state,action):
-        if action == "moveBetweenPiles":
-            reward = moveBetweenPiles()
-
-        elif action == "moveDeckToPile":
-            reward = moveDeckToPile()
-
-        elif action == "movePileToBlock":
-            reward = movePileToBlock()
-
-        elif action == "moveBlockToPile":
-            reward = moveBlockToPile()
-
-        elif action == "recycleDeck":
-            reward = recycleDeck()
-
-        elif action == "drawDeck":
-            reward = drawDeck()
 
         return reward
