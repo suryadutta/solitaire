@@ -122,15 +122,11 @@ class Game:
             # added to its corresponding Ace stack...
             if len(stack.cards) > 0 and self.add_to_ace_stack(stack.cards[0]):
                 card_added = stack.cards.pop(0)
-                if verbose:
-                    print(f"Adding {str(card_added)} to {str(card_added.suit)} A stack.")
                 return True
 
         #2: Check if any cards in the deck can be added.
         if self.add_to_ace_stack(self.deck.get_first_card()):
             card_added = self.deck.take_first_card()
-            if verbose:
-                print(f"Adding {str(card_added)} to {str(card_added.suit)} A stack.")
             return True
 
         #3: Move Kings to open stacks.
@@ -144,15 +140,11 @@ class Game:
                         card_added = pile.cards.pop(0)
                         # Place the King in the empty stack.
                         stack.add_card(card_added)
-                        if verbose:
-                            print(f"Moving {str(card_added)} to empty stack.")
                         return True
                 # Then, check the deck for a King.
                 if self.deck.get_first_card() is not None and self.deck.get_first_card().value == "K":
                     card_added = self.deck.take_first_card()
                     stack.add_card(card_added)
-                    if verbose:
-                        print(f"Moving {str(card_added)} to empty stack.")
                     return True
 
         #4: Add drawn card to playable stack.
@@ -165,8 +157,6 @@ class Game:
                     # Add the card to the stack.
                     card_added = self.deck.take_first_card()
                     stack.add_card(card_added)
-                    if verbose:
-                        print(f"Moving {str(card_added)} to stack.")
                     return True
 
         #5: Move cards around playable stacks.
@@ -198,8 +188,6 @@ class Game:
                                         0, card) for card in reversed(
                                             cards_to_move)]
                                     stack.cards = stack.cards[num_cards_to_move:]
-                                    if verbose:
-                                        print("Moved {0} cards between piles: {1}".format(num_cards_to_move, ", ".join([str(card) for card in cards_to_move])))
                                     return True
                                 elif stack_face_down == 0 and len(
                                     cards_to_move) == len(stack.cards):
@@ -207,8 +195,6 @@ class Game:
                                         0, card) for card in reversed(
                                             cards_to_move)]
                                     stack.cards = []
-                                    if verbose:
-                                        print("Moved {0} cards between piles: {1}".format(num_cards_to_move, ", ".join([str(card) for card in cards_to_move])))
                                     return True
         return False
 
@@ -230,8 +216,7 @@ class Game:
                 current_card = self.deck.cards[0]
 
                 if current_card in self.deck.cache:
-                    if verbose:
-                        print("No more moves left!")
+                    print("No more moves left!")
                     return
 
                 else:
@@ -240,8 +225,7 @@ class Game:
                     return self.simulate(draw=True, verbose=verbose)
 
             else:
-                if verbose:
-                    print("No more moves left!")
+                print("No more moves left!")
                 return
 
 
