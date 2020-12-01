@@ -41,14 +41,14 @@ class Game:
         # Flip the first card in the Deck.
         self.deck.cards[0].flip()
 
-    def get_game_elements(self):
-        object = {
+    def show_board(self):
+        board = {
             "deck": str(self.deck),
             "stacks": [str(stack) for stack in self.play_stacks],
             "ace stacks": {suit: str(stack) for suit, stack in
                            self.ace_stacks.items()}
         }
-        return object
+        return board
 
     def check_card_order(self, higher, lower):
         """Determine whether or not two cards can be placed consecutively. Make

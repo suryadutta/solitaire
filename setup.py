@@ -1,3 +1,4 @@
+import numpy as np
 import random
 
 class Card:
@@ -97,3 +98,9 @@ class Deck:
             self.cards[0].flip()
             self.cards.append(self.cards.pop(0))
             self.cards[0].flip()
+
+class Board:
+
+    def __init__():
+        self.stacks = np.zeros((13,7))
+        self.deck =
