@@ -295,7 +295,9 @@ class Game:
             2) The move WILL allow a play or transfer that frees a downcard
             3) The move WILL open up a space for a same-suit card pile transfer to free a downcard
             4) The move WILL clear a spot for an IMMEDIATE Waiting King
+        To test this strategy, use seed=5.
         """
+        protection = False
 
         #1: Check if there are any cards that are playable to an Ace stack.
         for stack in self.play_stacks:
@@ -308,11 +310,43 @@ class Game:
                 return True
 
         #2: Check if any cards in the deck are playable to an Ace stack.
-        if self.add_to_ace_stack(self.deck.get_first_card()):
-            card_added = self.deck.take_first_card()
-            if verbose == True:
+        card_to_add = self.deck.get_first_card()
+        if self.next_card_protection(card_to_add):
+            if self.add_to_ace_stack(card_to_add):
+                card_added = self.deck.take_first_card()
+                if verbose == True:
                     print(f"Move {self.moves}: Play {str(card_added)} from deck to Ace stack")
-            return True
+                return True
+
+    def next_card_protection(self, card_to_add):
+        """Wait to build the Ace stack until all of these criteria are met. Note that enabling this may
+        cause previously winning hands to lose.
+        """
+        # Turn off to debug
+        disable = False
+
+        if card_to_add is not None:
+            next_lowest = Game.values.index(card_to_add.value) - 1
+
+            # Check if there's another card with the same value on the board
+            one_on_board = []
+            for stack in self.play_stacks:
+                one_on_board.append([(card.suit, card.value) for card in stack.get_face_up_cards() if (card.value == card_to_add.value and Game.suits[card.suit] == Game.suits[card_to_add.suit])])
+            criteria1 = any(one_on_board)
+
+            # Check if both next lowest cards of opposite suit are on the board
+            both_on_board = []
+            for stack in self.play_stacks:
+                both_on_board.append([(card.suit, card.value) for card in stack.get_face_up_cards() if (card.value == Game.values[next_lowest] and Game.suits[card.suit] != Game.suits[card_to_add.suit])])
+            criteria2 = np.count_nonzero(both_on_board) == 2
+
+            # Check if both next lowest cards of opposite suit are in ace stacks
+            both_in_aces = []
+            for i in list(play.ace_stacks.keys()):
+                both_in_aces.append([(card.suit, card.value) for card in self.ace_stacks[i].get_face_up_cards() if card.value == Game.values[next_lowest] and Game.suits[card.suit] != play.suits[card_to_add.suit]])
+            criteria3 = np.count_nonzero(both_in_aces) == 2
+
+            return any([criteria1, criteria2, criteria3, disable])
 
     def take_strategic_turn(self, verbose=False):
 
