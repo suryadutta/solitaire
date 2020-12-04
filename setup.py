@@ -1,5 +1,7 @@
-import numpy as np
+import pprint
 import random
+import numpy as np
+
 
 class Card:
 
@@ -18,11 +20,57 @@ class Card:
         self.flipped = not self.flipped
 
     def __str__(self):
-        """Return the suit and value of a card, e.g. "3 of ♠".
+        """Return the suit and value of a card, e.g. "3 ♠".
         """
-        return(f"{self.value} of {self.suit}")
+        return(f"{self.value} {self.suit}")
+    
+    
+class Deck:
 
+    def __init__(self, values, suits):
+        self.cards = []
+        self.cache = []
+        self.populate(values, suits)
+        self.shuffle()
 
+    def __str__(self):
+        return ", ".join([str(card) for card in self.cards])
+
+    def populate(self, values, suits):
+        for suit in suits:
+            for value in values:
+                this_card = Card(suit, value)
+                self.cards.append(this_card)
+
+    def shuffle(self):
+        """Reproducible results.
+        To test strategy one, use seed=4.
+        To test strategy two, use seed=7.
+        """
+        random.shuffle(self.cards)
+
+    def get_first_card(self):
+        if len(self.cards) > 0:
+            return self.cards[0]
+        else:
+            return None
+
+    def take_first_card(self, flip=True):
+        if len(self.cards) > 0:
+            next_card = self.cards.pop(0)
+            if flip and len(self.cards) > 0:
+                self.cards[0].flip()
+            return next_card
+        else:
+            return None
+
+    def draw_card(self):
+        if len(self.cards) > 0:
+            self.cards[0].flip()
+            self.cards.append(self.cards.pop(0))
+            self.cards[0].flip()
+            
+            
 class Stack:
 
     def __init__(self):
@@ -56,51 +104,3 @@ class Stack:
         if face_down_count > 0:
             returned_cards.insert(0, f"{face_down_count} cards face down.")
         return ", ".join(returned_cards)
-
-
-class Deck:
-
-    def __init__(self, values, suits):
-        self.cards = []
-        self.cache = []
-        self.populate(values, suits)
-        self.shuffle()
-
-    def __str__(self):
-        return ", ".join([str(card) for card in self.cards])
-
-    def populate(self, values, suits):
-        for suit in suits:
-            for value in values:
-                this_card = Card(suit, value)
-                self.cards.append(this_card)
-
-    def shuffle(self):
-        random.shuffle(self.cards)
-
-    def get_first_card(self):
-        if len(self.cards) > 0:
-            return self.cards[0]
-        else:
-            return None
-
-    def take_first_card(self, flip=True):
-        if len(self.cards) > 0:
-            next_card = self.cards.pop(0)
-            if flip and len(self.cards) > 0:
-                self.cards[0].flip()
-            return next_card
-        else:
-            return None
-
-    def draw_card(self):
-        if len(self.cards) > 0:
-            self.cards[0].flip()
-            self.cards.append(self.cards.pop(0))
-            self.cards[0].flip()
-
-class Board:
-
-    def __init__():
-        self.stacks = np.zeros((13,7))
-        self.deck =
